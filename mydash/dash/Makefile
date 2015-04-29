@@ -4,7 +4,7 @@ CFLAGS=-g -Wall
 IFLAGS=-I../include -I.
 LIBS=-lreadline -lncurses 
 OBJECTS=mydash.o job.o git_version.o
-CUSTOM_LIBS_DIR=-L../lib
+CUSTOM_LIBS_DIR=-L../
 CUSTOM_LIBS=-lmylib
 
 

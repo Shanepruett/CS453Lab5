@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     seed = atoi(argv[3]);
   }
 
-  list = createList(equals, toString, freeObject);
+  list = createList(equals, toString, freeObject, n);
   for (i=0; i<n; i++)
     {
       job = createObject(i, "args");

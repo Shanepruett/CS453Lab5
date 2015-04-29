@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	int *object;
 
 	n=1000;
-	list = createList(equals, toString, freeObject);
+	list = createList(equals, toString, freeObject, n);
 	for (i=0; i<n; i++) {
 		object = (int *) malloc(sizeof(int));
 		*object = i;

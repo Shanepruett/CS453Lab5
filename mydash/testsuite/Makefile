@@ -1,7 +1,7 @@
 
 INSTALL=..
 INCLUDE=$(INSTALL)/include -I.
-LIBS=$(INSTALL)/lib
+LIBS=$(INSTALL)/
 LFLAGS=-L$(LIBS) -lmylib
 CC=gcc
 CFLAGS=-Wall -g  -I$(INCLUDE)

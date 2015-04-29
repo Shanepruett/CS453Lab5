@@ -20,6 +20,8 @@
 
 ListPtr testlist;
 
+int maxListSize = 100;
+
 int testCount = 0;
 int passCount = 0;
 
@@ -91,7 +93,7 @@ Boolean nullNodeTest()
 void beforeTest(char* testName)
 {
 	printTestInfo(testName, "Running...");
-	testlist = createList(equals, toString, freeObject);
+	testlist = createList(equals, toString, freeObject, maxListSize);
 	testCount++;
 }
 void afterTest(char* testName, Boolean result)
