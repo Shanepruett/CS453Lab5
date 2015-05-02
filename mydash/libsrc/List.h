@@ -119,7 +119,7 @@ NodePtr removeNode (ListPtr list, NodePtr node);
  * found node.
  *
  * @param list a pointer to a <code>List</code>.
- * @param the object to search for.
+ * @param obj the object to search for.
  * @return a pointer to the node that was found. Or <code>NULL</code> if a node with the given key is not 
  * found or the list is <code>NULL</code> or empty.
  */
@@ -128,14 +128,14 @@ NodePtr search (const ListPtr list, const void *obj);
 /**
  * Reverses the order of the given list.
  *
- * @param list a pointer to a <code>List</code>.
+ * @param L a pointer to a <code>List</code>.
  */
 void reverseList (ListPtr L);
 
 /**
  * Prints the list.
  *
- * @param list a pointer to a <code>List</code>.
+ * @param L a pointer to a <code>List</code>.
  */
 void printList (const ListPtr L);
 

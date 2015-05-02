@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../libsrc/common.h"
-#include "../libsrc/Node.h"
-#include "../libsrc/List.h"
+#include "../include/common.h"
+#include "../include/Node.h"
+#include "../include/List.h"
 
 #include "Object.h"
 
