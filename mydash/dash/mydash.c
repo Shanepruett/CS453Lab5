@@ -29,10 +29,11 @@ int main()
 
     // used to retain original commands with ampersand
     char *unmodLine = "";
-    
+
     int maxBackgroundJobs = 100;
-    
-    ListPtr jobList = createList(&jobEqual, &jobToString, &freeJob, maxBackgroundJobs);
+
+    ListPtr jobList =
+	createList(&jobEqual, &jobToString, &freeJob, maxBackgroundJobs);
 
     using_history();
     while ((line = readline(DASH_PROMPT))) {

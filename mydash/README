@@ -88,15 +88,20 @@ PROGRAM DESIGN:
 
    I started by writing the buddy_init function. I initially was using sbrk to
    also retrieve memory for the AVAIL list, but switch to statically allocated
-   since I was always intializzing to 32Gb. I decided to have my AVAIL list
-   keep record of just the pointer to the head of each block size instead of
-   The method used in Information Structures. I use a structure called block to
-   use as header information for each block of memory. The block has an unsigned
-   tag used to determine if its being "used", unsigned kval to determine the
-   save of the block of memory, and to block pointers prev and next to maintain
-   a double linked list. Arguably it felt like a double linked list was unneccesary
-   but I opted to maintain this sctructure, if I got this application working
-   fully I would consider ruining my day by switching to a single linked list.
+   since I was always intializzing to 32Gb. I decided to maintain the size of 
+   the AVAIL list at the max k value despite changing the init to potentially
+   have less than that amount of memory available.
+
+   I decided to have my AVAIL list keep record of just the pointer to the head 
+   of each block size instead of The method used in Information Structures. 
+
+   I use a structure called block to use as header information for each block 
+   of memory. The block has an unsigned tag used to determine if its being "used",
+   unsigned kval to determine the save of the block of memory, and to block 
+   pointers prev and next to maintain a double linked list. Arguably it felt 
+   like a double linked list was unneccesary but I opted to maintain this 
+   sctructure, if I got this application working fully I would consider ruining 
+   my day by switching to a single linked list.
 
    
  
@@ -121,9 +126,16 @@ TESTING:
 
    To further test my buddy problems I made a modified version of buddy-test 
    that filled the array with "malloced" memory (my buddy_malloc seems to work 
-   great), then systematically free those points. The lists are maintained 
-   well until a buddy is found. My buddy finding seems to be finding incorrect
-   buddies. I haven't been able to fix this yet.
+   great), then systematically free those points. The lists were  maintained 
+   well until a buddy was found. My buddy finding seems to be finding incorrect
+   buddies. I added a test to make sure the buddy that was found was in the 
+   correct list.
+
+   After fixing those bugs I modified my code to try to grab 32 Gb of memory in
+   the init, and failing that to decrement the exponent asked for until it did
+   get the correct amount or it fails when the amount allocated was less than
+   the minimum or less than the amount asked for. I haven't come up with a way to
+   test if this is working unfortunately, which is why I'm mentioning it here.
 
 DISCUSSION:
 
@@ -164,16 +176,105 @@ DISCUSSION:
    Sadly this still is not working. It dawns on me that its possibly the split that
    is causing the problem. So I'm including the fundamental buddy making split line.
 	
-	block *SEC = (block*) ((((void*)AVAIL[k-1] - BASE) + ((size_t) 1 << (k-1))) + BASE) ;
+	block *SEC = (block*) ((((size_t)AVAIL[k-1] - (size_t)BASE) + ((size_t) 1 << (k-1))) + (size_t)BASE) ;
 
   I've learned that its easier to make friends than buddies. I'm going to spend the few
   precious moments left of the evening to try to make all this work. So if it works
   when you get this submitted, know that I learned a valuable lesson, that is every 
   minute counts. If it doesn't work, I'm enjoying many beers by the time you read this.
 
+  BREAKTHROUGH: After sleeping on it and doing some more thorough testing I realized the
+  problem wasn't that I wasn't finding the correct Buddy address, but that the Buddy 
+  address had been split since then and had a lower k value. I added the following code
+  to ensure the buddy was in the right list and walla, no more seg faults. 
 
+	if (k == BUD->kval)
+        	buddy = BUD->tag; // buddy is used to evaluate whether a buddy was present.
 
+INTERPOSING AND INTEGRATING DISCUSSION:
+
+  To interpose my library I just added the malloc, free, calloc, and realloc functions to 
+  my buddy manager and had them call the associated buddy version of the function. And because
+  I didn't believe it when it started working right away I added some print lines when the
+  function was called. here's a small snipped proving to me that it was working.
+
+	[spruett@onyx mydash]$ LD_LIBRARY_PATH=. LD_PRELOAD=libbuddy.so ./mydash
+	interposed: buddy_malloc
+	interposed: buddy_malloc
+	... more allocs ...
+	interposed: buddy_malloc
+	interposed: buddy_realloc
+	interposed: buddy_malloc
+	buddy-test  docs            doxygen.log  include     libbuddy.so  libmylib.so  Makefile  README     test-harness  testsuite
+	dash        doxygen-config  git.log      libbuddy.a  libmylib.a   libsrc       mydash    TestCases  test.sh       valgrind.supp
+	interposed: buddy_free
+	interposed: buddy_free
+	interposed: buddy_free
+	interposed: buddy_free
+	interposed: buddy_free
+	interposed: buddy_malloc
+	interposed: buddy_free
+	interposed: buddy_malloc
+	mydash>interposed: buddy_malloc
+	exit
+	interposed: buddy_free
+	interposed: buddy_malloc
+	interposed: buddy_malloc
+	interposed: buddy_malloc
+	interposed: buddy_malloc
+	interposed: buddy_free
+	interposed: buddy_free
+	[spruett@onyx mydash]$
+   
+  Some basic testing I did to make sure it was behaving as it should. I have no idea where the
+  strange "rN," is coming from in my dash program. But it does it when its interposed and when
+  its not, so its a feature. This is just a snippet:
+
+	[spruett@onyx mydash]$ LD_LIBRARY_PATH=. LD_PRELOAD=libbuddy.so ./mydash
+	mydash>ls
+	buddy-test  docs            doxygen.log  include     libbuddy.so  libmylib.so  Makefile  README     test-harness  valgrind.supp
+	dash        doxygen-config  git.log      libbuddy.a  libmylib.a   libsrc       mydash    TestCases  testsuite
+	mydash>sleep 5
+	mydash>sleep 5&
+	[1] 48276 sleep 5&
+	mydash>jobs
+	[1] Running sleep 5&
+	mydash>
+	[1] Done sleep 5&
+	rN, mydash>
+	mydash>sleep 10 &
+	[1] 48493 sleep 10 &
+	mydash>sleep 6 &
+	[2] 48514 sleep 6 &
+	mydash>joba
+	Error: execvp failed
+	mydash>jobs
+	[1] Running sleep 10 &
+	[2] Running sleep 6 &
+	mydash>
+	[1] Done sleep 10 &
+	rN, [2] Done sleep 6 &
+	rN, mydash>ls
+	buddy-test  docs            doxygen.log  include     libbuddy.so  libmylib.so  Makefile  README     test-harness  valgrind.supp
+	dash        doxygen-config  git.log      libbuddy.a  libmylib.a   libsrc       mydash    TestCases  testsuite
+	mydash>
+	mydash>exit
+	[spruett@onyx mydash]$
 
 EXTRA CREDIT:
 
-   None.
+  Buddy System Performance:
+	This barely out performs but hey! (tested while ssh on to onyx, not optimized)
+
+	[spruett@onyx mydash]$ time ./buddy-test/buddy-test 20000000 1234 s
+
+	real    0m2.535s
+	user    0m2.512s
+	sys     0m0.006s
+	[spruett@onyx mydash]$ time ./buddy-test/malloc-test 20000000 1234 s
+
+	real    0m2.711s
+	user    0m2.627s
+	sys     0m0.003s
+	[spruett@onyx mydash]$
+
